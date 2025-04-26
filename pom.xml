@@ -15,6 +15,7 @@
         <module>docker-container-service</module>
         <module>user-auth-service</module>
         <module>model</module>
+        <module>frontend</module>
     </modules>
     <groupId>org.course</groupId>
     <artifactId>docker-service</artifactId>
