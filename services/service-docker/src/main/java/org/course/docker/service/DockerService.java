@@ -5,9 +5,11 @@ import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Info;
+import com.github.dockerjava.api.model.Statistics;
 import org.course.container.ContainerVo;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Description:
@@ -71,5 +73,19 @@ public interface DockerService {
     Boolean restartContainer(String containerId);
 
     Info getDockerInfo();
-
+    
+    /**
+     * 获取容器统计信息
+     *
+     * @param containerId
+     * @return
+     */
+    Statistics getContainerStats(String containerId);
+    
+    /**
+     * 获取所有容器的统计信息
+     *
+     * @return
+     */
+    Map<String, Statistics> getAllContainersStats();
 }

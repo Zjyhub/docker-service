@@ -3,6 +3,7 @@ package org.course.docker.controller;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Info;
+import com.github.dockerjava.api.model.Statistics;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
@@ -11,7 +12,9 @@ import org.course.docker.service.DockerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Description:
@@ -89,5 +92,20 @@ public class DockerController {
     public Info getDockerInfo() {
         return dockerService.getDockerInfo();
     }
+    
+    @GetMapping("/stats/{id}")
+    @Operation(summary = "获取容器统计信息", description = "根据容器id获取容器的CPU、内存和网络使用情况")
+    public Statistics getContainerStats(
+            @PathVariable("id") String containerId
+    ) {
+        return dockerService.getContainerStats(containerId);
+    }
+    
+    @GetMapping("/stats/all")
+    @Operation(summary = "获取所有容器统计信息", description = "获取当前机器docker中所有运行容器的CPU、内存和网络使用情况")
+    public Map<String, Statistics> getAllContainersStats() {
+        return dockerService.getAllContainersStats();
+    }
+    
 
 }
