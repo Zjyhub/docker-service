@@ -1,7 +1,6 @@
 package org.course.meta.service;
 
-import org.springframework.cloud.client.ServiceInstance;
-import org.springframework.stereotype.Service;
+import org.course.container.ContainerVo;
 
 import java.util.List;
 
@@ -11,5 +10,5 @@ import java.util.List;
  * @author zjy
  */
 public interface MetaService {
-    List<ServiceInstance> getServiceInstances();
+    List<ContainerVo> getContainerList();
 }

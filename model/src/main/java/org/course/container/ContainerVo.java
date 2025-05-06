@@ -16,5 +16,6 @@ public class ContainerVo {
     private Long created;
     private String ports;
     private String command;
+    private String host;
 
 }
