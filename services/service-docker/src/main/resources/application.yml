@@ -1,0 +1,13 @@
+server:
+  port: 8000
+spring:
+  application:
+    name: service-docker
+  cloud:
+    nacos:
+      server-addr: localhost:8848
+
+
+
+
+
