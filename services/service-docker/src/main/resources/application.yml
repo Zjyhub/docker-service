@@ -5,7 +5,7 @@ spring:
     name: service-docker
   cloud:
     nacos:
-      server-addr: localhost:8848
+      server-addr: 192.168.65.222:8848
 
 
 
