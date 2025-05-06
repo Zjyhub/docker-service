@@ -1,5 +1,6 @@
 package org.course.meta.service.impl;
 
+import com.github.dockerjava.api.model.Container;
 import org.course.container.ContainerVo;
 import org.course.meta.service.MetaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,4 +50,16 @@ public class MetaServiceImpl implements MetaService {
         return containerVoList;
     }
 
+    @Override
+    public Container getContainerInfo(String id, String host) {
+        List<ServiceInstance> instances = discoveryClient.getInstances("service-docker");
+        for (ServiceInstance instance : instances) {
+            if (host.equals(instance.getHost())) {
+                String url = instance.getUri().toString() + "/docker/info?id=" + id;
+                Container obj = restTemplate.getForObject(url, Container.class);
+                return obj;
+            }
+        }
+        return null;
+    }
 }

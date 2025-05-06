@@ -1,5 +1,6 @@
 package org.course.meta.controller;
 
+import com.github.dockerjava.api.model.Container;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.course.container.ContainerVo;
@@ -40,13 +41,14 @@ public class MetaController {
 //
 //    }
 //
-//    @GetMapping("/info")
-//    @Operation(summary = "获取容器信息",description = "根据容器id获取容器信息")
-//    public Container getContainerInfo(
-//            @RequestParam("id") String containerId
-//    ) {
-//
-//    }
+    @GetMapping("/info")
+    @Operation(summary = "获取容器信息",description = "根据容器id获取容器信息")
+    public Container getContainerInfo(
+            @RequestParam("id") String containerId,
+            @RequestParam("host") String host
+    ) {
+       return metaService.getContainerInfo(containerId,host);
+    }
 //
 //    @PostMapping("/start")
 //    @Operation(summary = "启动容器",description = "根据容器id启动容器")
