@@ -3,6 +3,7 @@ package org.course.docker.service.impl;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Info;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.course.container.ContainerVo;
@@ -104,5 +105,10 @@ public class DockerServiceImpl implements DockerService {
             log.info("restart container failed, containerId: {}, error: {}", containerId, e.getMessage());
             return false;
         }
+    }
+
+    @Override
+    public Info getDockerInfo() {
+        return dockerClient.infoCmd().exec();
     }
 }

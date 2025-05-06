@@ -1,13 +1,10 @@
 package org.course.meta.controller;
 
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.course.container.ContainerVo;
 import org.course.meta.service.MetaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,17 +19,18 @@ import java.util.List;
 @Tag(name = "Meta API")
 public class MetaController {
 
-    private MetaService metaService;
+    private final MetaService metaService;
+
 
     @Autowired
-    public MetaController(MetaService metaService){
+    public MetaController(MetaService metaService) {
         this.metaService = metaService;
     }
 
-    @GetMapping("/instances")
-    @Operation(summary = "获取服务实例",description = "获取当前机器docker中的所有服务实例")
-    public List<ServiceInstance> getServiceInstances() {
-        return metaService.getServiceInstances();
+    @GetMapping("/lists")
+    @Operation(summary = "获取容器列表", description = "获取所有机器docker中的所有容器")
+    public List<ContainerVo> getServiceInstances() {
+        return metaService.getContainerList();
     }
 
 

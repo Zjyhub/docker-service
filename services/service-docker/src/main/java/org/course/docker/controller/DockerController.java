@@ -2,6 +2,7 @@ package org.course.docker.controller;
 
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Info;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
@@ -81,6 +82,12 @@ public class DockerController {
     @Operation(summary = "获取镜像列表",description = "获取当前机器docker中的所有镜像")
     public List<Image> getImageList() {
         return dockerService.getImageList();
+    }
+
+    @GetMapping("/sysInfo")
+    @Operation(summary = "获取docker系统信息",description = "获取当前机器docker的系统信息")
+    public Info getDockerInfo() {
+        return dockerService.getDockerInfo();
     }
 
 }

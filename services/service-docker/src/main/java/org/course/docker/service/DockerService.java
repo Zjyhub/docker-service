@@ -4,6 +4,7 @@ import com.github.dockerjava.api.command.InspectContainerCmd;
 import com.github.dockerjava.api.command.InspectContainerResponse;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.Image;
+import com.github.dockerjava.api.model.Info;
 import org.course.container.ContainerVo;
 
 import java.util.List;
@@ -68,5 +69,7 @@ public interface DockerService {
      * @return
      */
     Boolean restartContainer(String containerId);
+
+    Info getDockerInfo();
 
 }
