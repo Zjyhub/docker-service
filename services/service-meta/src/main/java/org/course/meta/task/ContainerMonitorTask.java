@@ -45,11 +45,11 @@ public class ContainerMonitorTask {
             if (!warnings.isEmpty()) {
                 log.warn("发现 {} 个容器资源使用超过警告阈值", warnings.size());
                 for (ContainerStatVO warning : warnings) {
-                    log.warn("容器警告 - 主机: {}, 容器: {}, ID: {}, 警告: {}",
+                    log.warn("容器警告 - 主机: {}, 容器: {}, ID: {}, 警告级别: {}",
                             warning.getHost(),
                             warning.getContainerName(),
                             warning.getContainerId(),
-                            warning.getWarningMessage());
+                            warning.getStatus());
                 }
             } else {
                 log.info("容器状态监控正常，未发现超过阈值的容器");

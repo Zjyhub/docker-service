@@ -7,6 +7,7 @@ import org.course.container.DockerInfo;
 import org.course.container.DockerStatus;
 import org.course.docker.service.DockerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -70,6 +71,47 @@ public class DockerController {
             @RequestParam("id") String containerId
     ) {
         return dockerService.restartContainer(containerId);
+    }
+
+    @PostMapping("/create")
+    @Operation(summary = "创建容器", description = "创建新的容器，指定镜像、内存限制和容器名称")
+    public ResponseEntity<?> createContainer(
+            @RequestParam("name") String containerName,
+            @RequestParam("memory") Long memoryLimit,
+            @RequestParam("image") String image
+    ) {
+        try {
+            // 验证镜像名称格式
+            if (!isValidImageName(image)) {
+                return ResponseEntity.badRequest().body("Invalid image name format");
+            }
+
+            // 验证内存限制
+            if (memoryLimit <= 0) {
+                return ResponseEntity.badRequest().body("Memory limit must be greater than 0");
+            }
+
+            // 验证容器名称
+            if (containerName == null || containerName.trim().isEmpty()) {
+                return ResponseEntity.badRequest().body("Container name cannot be empty");
+            }
+
+            String containerId = dockerService.createContainer(containerName, memoryLimit, image);
+            return ResponseEntity.ok(containerId);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private boolean isValidImageName(String image) {
+        // 基本的镜像名称格式验证
+        // 允许的格式：
+        // - 简单名称：ubuntu
+        // - 带标签：ubuntu:latest
+        // - 带仓库：docker.io/ubuntu
+        // - 完整格式：docker.io/ubuntu:latest
+        return image != null && 
+               image.matches("^[a-zA-Z0-9][a-zA-Z0-9_.-]*(/[a-zA-Z0-9][a-zA-Z0-9_.-]*)?(:[a-zA-Z0-9_.-]*)?$");
     }
 
 //

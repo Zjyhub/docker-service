@@ -30,11 +30,11 @@ public interface MetaService {
     Boolean restartContainer(String id, String host);
 
     /**
-     * 检查所有容器的状态并返回警告信息
+     * 检查所有容器的状态，返回超过阈值的容器
      *
-     * @param cpuThreshold    CPU使用率阈值（百分比）
-     * @param memoryThreshold 内存使用率阈值（百分比）
-     * @return 需要警告的容器统计信息
+     * @param cpuThreshold CPU使用率阈值
+     * @param memoryThreshold 内存使用率阈值
+     * @return 超过阈值的容器列表
      */
     List<ContainerStatVO> checkContainersStatus(double cpuThreshold, double memoryThreshold);
 }

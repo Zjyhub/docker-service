@@ -1,5 +1,7 @@
 package org.course.meta.service.impl;
 
+import lombok.extern.slf4j.Slf4j;
+import org.course.container.ContainerStatus;
 import org.course.container.DockerInfo;
 import org.course.container.DockerStatus;
 import org.course.meta.model.ContainerStatVO;
@@ -10,7 +12,7 @@ import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -18,11 +20,11 @@ import java.util.List;
  *
  * @author zjy
  */
+@Slf4j
 @Service
 public class MetaServiceImpl implements MetaService {
 
     private final DiscoveryClient discoveryClient;
-
     private final RestTemplate restTemplate;
 
     @Autowired
@@ -59,7 +61,6 @@ public class MetaServiceImpl implements MetaService {
         }
         return new DockerStatus();
     }
-
 
     @Override
     public Boolean startContainer(String id, String host) {
@@ -111,8 +112,74 @@ public class MetaServiceImpl implements MetaService {
 
     @Override
     public List<ContainerStatVO> checkContainersStatus(double cpuThreshold, double memoryThreshold) {
-        return new LinkedList<>();
+        List<ContainerStatVO> result = new ArrayList<>();
+        List<ServiceInstance> instances = discoveryClient.getInstances("service-docker");
+        
+        for (ServiceInstance instance : instances) {
+            try {
+                String url = instance.getUri().toString() + "/docker/status";
+                DockerStatus dockerStatus = restTemplate.getForObject(url, DockerStatus.class);
+                
+                if (dockerStatus != null && dockerStatus.getContainers() != null) {
+                    for (ContainerStatus container : dockerStatus.getContainers()) {
+                        if (isContainerAbnormal(container, cpuThreshold, memoryThreshold)) {
+                            ContainerStatVO statVO = convertToContainerStatVO(container, instance.getHost(), 
+                                    cpuThreshold, memoryThreshold);
+                            result.add(statVO);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                log.error("Error checking containers for instance {}: {}", 
+                        instance.getHost(), e.getMessage());
+            }
+        }
+        
+        return result;
     }
 
+    private boolean isContainerAbnormal(ContainerStatus container, double cpuThreshold, double memoryThreshold) {
+        // 检查CPU使用率
+        if (container.getCpuUsagePercent() > cpuThreshold) {
+            return true;
+        }
 
+        // 检查内存使用率
+        if (container.getMemLimit() > 0) {
+            double memoryUsagePercent = (double) container.getMemUsage() / container.getMemLimit() * 100;
+            return memoryUsagePercent > memoryThreshold;
+        }
+
+        return false;
+    }
+
+    private ContainerStatVO convertToContainerStatVO(ContainerStatus container, String host, 
+            double cpuThreshold, double memoryThreshold) {
+        ContainerStatVO statVO = new ContainerStatVO();
+        statVO.setContainerId(container.getContainerId());
+        statVO.setHost(host);
+        statVO.setCpuUsagePercentage(container.getCpuUsagePercent());
+        
+        // 计算内存使用率
+        if (container.getMemLimit() > 0) {
+            double memoryUsagePercent = (double) container.getMemUsage() / container.getMemLimit() * 100;
+            statVO.setMemoryUsagePercentage(Math.round(memoryUsagePercent * 100.0) / 100.0);
+        }
+        
+        // 设置状态
+        statVO.setStatus(determineStatus(container.getCpuUsagePercent(), 
+                statVO.getMemoryUsagePercentage(), cpuThreshold, memoryThreshold));
+        
+        return statVO;
+    }
+
+    private String determineStatus(double cpuUsage, Double memoryUsage, 
+            double cpuThreshold, double memoryThreshold) {
+        if (cpuUsage >= 90 || (memoryUsage != null && memoryUsage >= 90)) {
+            return "CRITICAL";
+        } else if (cpuUsage >= cpuThreshold || (memoryUsage != null && memoryUsage >= memoryThreshold)) {
+            return "WARNING";
+        }
+        return "OK";
+    }
 }

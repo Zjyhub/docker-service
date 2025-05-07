@@ -1,7 +1,10 @@
 package org.course.docker.service;
 
+import org.course.container.ContainerVo;
 import org.course.container.DockerInfo;
 import org.course.container.DockerStatus;
+
+import java.util.List;
 
 /**
  * Description:
@@ -58,5 +61,15 @@ public interface DockerService {
      */
     DockerStatus getDockerStatus();
 
+    /**
+     * 创建新的容器
+     *
+     * @param containerName 容器名称
+     * @param memoryLimit 内存限制（字节）
+     * @param image 镜像名称
+     * @return 容器ID
+     * @throws RuntimeException 当镜像不存在或拉取失败时抛出异常
+     */
+    String createContainer(String containerName, Long memoryLimit, String image);
 
 }

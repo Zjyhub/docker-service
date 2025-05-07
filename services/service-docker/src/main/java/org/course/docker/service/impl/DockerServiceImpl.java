@@ -1,7 +1,13 @@
 package org.course.docker.service.impl;
 
 import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.command.CreateContainerCmd;
+import com.github.dockerjava.api.command.CreateContainerResponse;
+import com.github.dockerjava.api.command.PullImageResultCallback;
+import com.github.dockerjava.api.exception.DockerException;
+import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
+import com.github.dockerjava.api.model.HostConfig;
 import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.api.model.Statistics;
 import com.github.dockerjava.core.InvocationBuilder;
@@ -17,6 +23,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Description:
@@ -29,6 +36,7 @@ import java.util.List;
 public class DockerServiceImpl implements DockerService {
 
     private DockerClient dockerClient;
+    private static final int PULL_TIMEOUT_SECONDS = 300; // 5分钟超时
 
     @Autowired
     public DockerServiceImpl(DockerClient dockerClient) {
@@ -124,6 +132,61 @@ public class DockerServiceImpl implements DockerService {
         } catch (Exception e) {
             log.info("restart container failed, containerId: {}, error: {}", containerId, e.getMessage());
             return false;
+        }
+    }
+
+    @Override
+    public String createContainer(String containerName, Long memoryLimit, String image) {
+        try {
+            // 检查镜像是否存在，如果不存在则拉取
+            try {
+                dockerClient.inspectImageCmd(image).exec();
+                log.info("Image {} already exists", image);
+            } catch (NotFoundException e) {
+                log.info("Image {} not found, pulling...", image);
+                try {
+                    dockerClient.pullImageCmd(image)
+                            .start()
+                            .awaitCompletion(PULL_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+                    log.info("Successfully pulled image {}", image);
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    throw new RuntimeException("Image pull interrupted: " + image);
+                } catch (Exception ex) {
+                    throw new RuntimeException("Failed to pull image: " + image + ", error: " + ex.getMessage());
+                }
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to inspect image: " + image + ", error: " + e.getMessage());
+            }
+
+            // 验证容器名称是否已存在
+            List<Container> existingContainers = dockerClient.listContainersCmd()
+                    .withShowAll(true)
+                    .withNameFilter(List.of(containerName))
+                    .exec();
+            if (!existingContainers.isEmpty()) {
+                throw new RuntimeException("Container with name " + containerName + " already exists");
+            }
+
+            // 创建容器配置
+            HostConfig hostConfig = new HostConfig()
+                    .withMemory(memoryLimit)  // 设置内存限制
+                    .withMemorySwap(memoryLimit);  // 设置交换内存限制
+
+            // 创建容器
+            CreateContainerCmd createContainerCmd = dockerClient.createContainerCmd(image)
+                    .withName(containerName)
+                    .withHostConfig(hostConfig)
+                    .withCmd("tail", "-f", "/dev/null");  // 保持容器运行
+
+            CreateContainerResponse response = createContainerCmd.exec();
+            String containerId = response.getId();
+
+            log.info("Container created successfully: {}", containerId);
+            return containerId;
+        } catch (Exception e) {
+            log.error("Failed to create container: {}", e.getMessage());
+            throw new RuntimeException("Failed to create container: " + e.getMessage());
         }
     }
 

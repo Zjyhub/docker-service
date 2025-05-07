@@ -27,35 +27,15 @@ public class ContainerStatVO {
     /**
      * CPU使用率百分比
      */
-    private double cpuUsagePercentage;
-    
-    /**
-     * 内存使用量(字节)
-     */
-    private long memoryUsage;
-    
-    /**
-     * 内存限制(字节)
-     */
-    private long memoryLimit;
+    private Double cpuUsagePercentage;
     
     /**
      * 内存使用率百分比
      */
-    private double memoryUsagePercentage;
-    
-    /**
-     * 统计时间戳
-     */
-    private String timestamp;
+    private Double memoryUsagePercentage;
     
     /**
      * 状态: OK, WARNING, CRITICAL
      */
-    private String status = "OK";
-    
-    /**
-     * 警告消息
-     */
-    private String warningMessage;
+    private String status;
 } 
