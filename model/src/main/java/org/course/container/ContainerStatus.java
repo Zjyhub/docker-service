@@ -8,9 +8,9 @@ import lombok.Data;
  * @author zjy
  */
 @Data
-public class ContainerVo {
+public class ContainerStatus {
     private String containerId;
-    private String name;
-    private String state;
-    private Long created;
+    private Long memUsage;
+    private Long memLimit;
+    private Double cpuUsagePercent;
 }

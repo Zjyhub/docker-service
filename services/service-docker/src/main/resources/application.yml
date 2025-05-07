@@ -7,7 +7,7 @@ spring:
     nacos:
       server-addr: 192.168.65.222:8848
       discovery:
-        ip: 192.168.65.247
+        ip: 192.168.65.222
 
 
 

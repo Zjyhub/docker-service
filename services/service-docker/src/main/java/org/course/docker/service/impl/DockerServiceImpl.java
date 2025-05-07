@@ -1,24 +1,22 @@
 package org.course.docker.service.impl;
 
 import com.github.dockerjava.api.DockerClient;
-import com.github.dockerjava.api.command.StatsCmd;
 import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
 import com.github.dockerjava.api.model.Info;
 import com.github.dockerjava.api.model.Statistics;
 import com.github.dockerjava.core.InvocationBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.course.container.ContainerStatus;
 import org.course.container.ContainerVo;
+import org.course.container.DockerInfo;
+import org.course.container.DockerStatus;
 import org.course.docker.service.DockerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Description:
@@ -38,36 +36,52 @@ public class DockerServiceImpl implements DockerService {
     }
 
     @Override
-    public List<ContainerVo> getContainerList() {
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        List<ContainerVo> containerVoList = new ArrayList<>();
-        for (Container container : containers) {
-            ContainerVo containerVo = new ContainerVo();
-            containerVo.setId(container.getId());
-            containerVo.setName(container.getNames());
-            containerVo.setImage(container.getImage());
-            containerVo.setState(container.getState());
-            containerVo.setCreated(container.getCreated());
-            containerVoList.add(containerVo);
-        }
-        return containerVoList;
+    public DockerInfo getDockerInfo() {
+        Info info = dockerClient.infoCmd().exec();
+        List<ContainerVo> containers = getContainerList();
+        DockerInfo dockerInfo = new DockerInfo();
+        dockerInfo.setMemTotal(info.getMemTotal());
+        dockerInfo.setContainers(containers);
+        return dockerInfo;
     }
 
     @Override
-    public Container getContainerInfo(String containerId) {
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
-        for (Container container : containers) {
-            if (container.getId().equals(containerId)) {
-                return container;
+    public DockerStatus getDockerStatus() {
+        Info info = dockerClient.infoCmd().exec();
+        List<ContainerVo> containers = getContainerList();
+        List<ContainerStatus> containerStatuses = new ArrayList<>();
+        DockerStatus dockerStatus = new DockerStatus();
+        dockerStatus.setMemTotal(info.getMemTotal());
+        long memUsage = 0L;
+        double cpuPercent = 0.0;
+        for (ContainerVo container : containers) {
+            if ("running".equals(container.getState())) {
+                ContainerStatus containerStatus = new ContainerStatus();
+                Statistics statistics = getContainerStats(container.getContainerId());
+                memUsage += statistics.getMemoryStats().getUsage() != null ?
+                        statistics.getMemoryStats().getUsage() : 0L;
+                containerStatus.setContainerId(container.getContainerId());
+                containerStatus.setMemUsage(statistics.getMemoryStats().getUsage());
+                containerStatus.setMemLimit(statistics.getMemoryStats().getLimit());
+                long curCpuUsage = statistics.getCpuStats().getCpuUsage().getTotalUsage() -
+                        statistics.getPreCpuStats().getCpuUsage().getTotalUsage();
+                long systemCpuUsage = statistics.getCpuStats().getSystemCpuUsage() -
+                        statistics.getPreCpuStats().getSystemCpuUsage();
+                double curCpuPercent = 0.0;
+                if (systemCpuUsage > 0) {
+                    curCpuPercent = (double) curCpuUsage / systemCpuUsage * 100;
+                }
+                containerStatus.setCpuUsagePercent(curCpuPercent);
+                containerStatuses.add(containerStatus);
             }
         }
-        return new Container();
+        dockerStatus.setMemUsage(memUsage);
+        dockerStatus.setCpuUsagePercent(cpuPercent);
+        dockerStatus.setContainers(containerStatuses);
+
+        return dockerStatus;
     }
 
-    @Override
-    public List<Image> getImageList() {
-        return dockerClient.listImagesCmd().withShowAll(true).exec();
-    }
 
     @Override
     public Boolean startContainer(String containerId) {
@@ -113,50 +127,36 @@ public class DockerServiceImpl implements DockerService {
         }
     }
 
-    @Override
-    public Info getDockerInfo() {
-        return dockerClient.infoCmd().exec();
+    public List<ContainerVo> getContainerList() {
+        List<Container> containers = dockerClient.listContainersCmd().withShowAll(true).exec();
+        List<ContainerVo> containerVoList = new ArrayList<>();
+        for (Container container : containers) {
+            ContainerVo containerVo = new ContainerVo();
+            containerVo.setContainerId(container.getId());
+            containerVo.setName(container.getNames()[0]);
+            containerVo.setState(container.getState());
+            containerVo.setCreated(container.getCreated());
+            containerVoList.add(containerVo);
+        }
+        return containerVoList;
     }
-    
-    @Override
+
     public Statistics getContainerStats(String containerId) {
         try {
             // 使用 InvocationBuilder.AsyncResultCallback 获取统计信息
             InvocationBuilder.AsyncResultCallback<Statistics> callback = new InvocationBuilder.AsyncResultCallback<>();
-            
+
             // 执行统计命令，不使用流模式（只获取一次）
-            dockerClient.statsCmd(containerId).withNoStream(true).exec(callback);
-            
-            try {
+            try (callback) {
+                dockerClient.statsCmd(containerId).withNoStream(true).exec(callback);
                 // 等待结果, 这里不传参数，使用默认超时
-                Statistics stats = callback.awaitResult();
-                return stats;
-            } finally {
-                // 确保在finally块中关闭回调
-                callback.close();
+                return callback.awaitResult();
             }
         } catch (Exception e) {
             log.error("Failed to get container stats, containerId: {}, error: {}", containerId, e.getMessage());
             return null;
         }
     }
-    
-    @Override
-    public Map<String, Statistics> getAllContainersStats() {
-        Map<String, Statistics> statsMap = new HashMap<>();
-        List<Container> containers = dockerClient.listContainersCmd().withShowAll(false).exec();
-        
-        for (Container container : containers) {
-            String containerId = container.getId();
-            try {
-                Statistics stats = getContainerStats(containerId);
-                if (stats != null) {
-                    statsMap.put(containerId, stats);
-                }
-            } catch (Exception e) {
-                log.error("Failed to get stats for container {}, error: {}", containerId, e.getMessage());
-            }
-        }
-        return statsMap;
-    }
+
+
 }

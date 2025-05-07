@@ -1,20 +1,13 @@
 package org.course.docker.controller;
 
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.Image;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.api.model.Statistics;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
-import org.course.container.ContainerVo;
+import org.course.container.DockerInfo;
+import org.course.container.DockerStatus;
 import org.course.docker.service.DockerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Description:
@@ -30,26 +23,25 @@ public class DockerController {
     private DockerService dockerService;
 
     @Autowired
-    public DockerController(DockerService dockerService){
+    public DockerController(DockerService dockerService) {
         this.dockerService = dockerService;
     }
 
-    @GetMapping("/containers")
-    @Operation(summary = "获取容器列表",description = "获取当前机器docker中的所有容器")
-    public List<ContainerVo> getContainerList() {
-        return dockerService.getContainerList();
+    @GetMapping("/sysInfo")
+    @Operation(summary = "获取docker系统信息", description = "获取当前机器docker的系统信息")
+    public DockerInfo getDockerInfo() {
+        return dockerService.getDockerInfo();
     }
 
-    @GetMapping("/info")
-    @Operation(summary = "获取容器信息",description = "根据容器id获取容器信息")
-    public Container getContainerInfo(
-            @RequestParam("id") String containerId
-    ) {
-        return dockerService.getContainerInfo(containerId);
+    @GetMapping("/status")
+    @Operation(summary = "获取docker状态", description = "获取当前机器docker的状态")
+    public DockerStatus getDockerStatus() {
+        return dockerService.getDockerStatus();
     }
+
 
     @PostMapping("/start")
-    @Operation(summary = "启动容器",description = "根据容器id启动容器")
+    @Operation(summary = "启动容器", description = "根据容器id启动容器")
     public Boolean startContainer(
             @RequestParam("id") String containerId
     ) {
@@ -57,7 +49,7 @@ public class DockerController {
     }
 
     @PostMapping("/stop")
-    @Operation(summary = "停止容器",description = "根据容器id停止容器")
+    @Operation(summary = "停止容器", description = "根据容器id停止容器")
     public Boolean stopContainer(
             @RequestParam("id") String containerId
     ) {
@@ -65,7 +57,7 @@ public class DockerController {
     }
 
     @PostMapping("/remove")
-    @Operation(summary = "删除容器",description = "根据容器id删除容器")
+    @Operation(summary = "删除容器", description = "根据容器id删除容器")
     public Boolean removeContainer(
             @RequestParam("id") String containerId
     ) {
@@ -73,39 +65,18 @@ public class DockerController {
     }
 
     @PostMapping("restart")
-    @Operation(summary = "重启容器",description = "根据容器id重启容器")
+    @Operation(summary = "重启容器", description = "根据容器id重启容器")
     public Boolean restartContainer(
             @RequestParam("id") String containerId
     ) {
         return dockerService.restartContainer(containerId);
     }
 
-
-    @GetMapping("/images")
-    @Operation(summary = "获取镜像列表",description = "获取当前机器docker中的所有镜像")
-    public List<Image> getImageList() {
-        return dockerService.getImageList();
-    }
-
-    @GetMapping("/sysInfo")
-    @Operation(summary = "获取docker系统信息",description = "获取当前机器docker的系统信息")
-    public Info getDockerInfo() {
-        return dockerService.getDockerInfo();
-    }
-    
-    @GetMapping("/stats/{id}")
-    @Operation(summary = "获取容器统计信息", description = "根据容器id获取容器的CPU、内存和网络使用情况")
-    public Statistics getContainerStats(
-            @PathVariable("id") String containerId
-    ) {
-        return dockerService.getContainerStats(containerId);
-    }
-    
-    @GetMapping("/stats/all")
-    @Operation(summary = "获取所有容器统计信息", description = "获取当前机器docker中所有运行容器的CPU、内存和网络使用情况")
-    public Map<String, Statistics> getAllContainersStats() {
-        return dockerService.getAllContainersStats();
-    }
-    
+//
+//    @GetMapping("/images")
+//    @Operation(summary = "获取镜像列表",description = "获取当前机器docker中的所有镜像")
+//    public List<Image> getImageList() {
+//        return dockerService.getImageList();
+//    }
 
 }
