@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
  */
 @RestController
 @RequestMapping("/docker")
+@CrossOrigin(origins = "*")
 @Tag(name = "Docker API")
 @Data
 public class DockerController {

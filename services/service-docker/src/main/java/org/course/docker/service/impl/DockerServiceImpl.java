@@ -3,8 +3,6 @@ package org.course.docker.service.impl;
 import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
-import com.github.dockerjava.api.command.PullImageResultCallback;
-import com.github.dockerjava.api.exception.DockerException;
 import com.github.dockerjava.api.exception.NotFoundException;
 import com.github.dockerjava.api.model.Container;
 import com.github.dockerjava.api.model.HostConfig;
@@ -22,7 +20,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -35,8 +35,8 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class DockerServiceImpl implements DockerService {
 
+    private static final int PULL_TIMEOUT_SECONDS = 300;
     private DockerClient dockerClient;
-    private static final int PULL_TIMEOUT_SECONDS = 300; // 5分钟超时
 
     @Autowired
     public DockerServiceImpl(DockerClient dockerClient) {
@@ -57,7 +57,7 @@ public class DockerServiceImpl implements DockerService {
     public DockerStatus getDockerStatus() {
         Info info = dockerClient.infoCmd().exec();
         List<ContainerVo> containers = getContainerList();
-        List<ContainerStatus> containerStatuses = new ArrayList<>();
+        Map<String, ContainerStatus> containerStatuses = new java.util.HashMap<>();
         DockerStatus dockerStatus = new DockerStatus();
         dockerStatus.setMemTotal(info.getMemTotal());
         long memUsage = 0L;
@@ -68,7 +68,7 @@ public class DockerServiceImpl implements DockerService {
                 Statistics statistics = getContainerStats(container.getContainerId());
                 memUsage += statistics.getMemoryStats().getUsage() != null ?
                         statistics.getMemoryStats().getUsage() : 0L;
-                containerStatus.setContainerId(container.getContainerId());
+
                 containerStatus.setMemUsage(statistics.getMemoryStats().getUsage());
                 containerStatus.setMemLimit(statistics.getMemoryStats().getLimit());
                 long curCpuUsage = statistics.getCpuStats().getCpuUsage().getTotalUsage() -
@@ -80,7 +80,7 @@ public class DockerServiceImpl implements DockerService {
                     curCpuPercent = (double) curCpuUsage / systemCpuUsage * 100;
                 }
                 containerStatus.setCpuUsagePercent(curCpuPercent);
-                containerStatuses.add(containerStatus);
+                containerStatuses.put(container.getContainerId(), containerStatus);
             }
         }
         dockerStatus.setMemUsage(memUsage);
@@ -196,9 +196,15 @@ public class DockerServiceImpl implements DockerService {
         for (Container container : containers) {
             ContainerVo containerVo = new ContainerVo();
             containerVo.setContainerId(container.getId());
-            containerVo.setName(container.getNames()[0]);
+            // 去掉前缀"/"
+            containerVo.setName(container.getNames()[0].substring(1));
             containerVo.setState(container.getState());
-            containerVo.setCreated(container.getCreated());
+            // 获取容器的创建时间,将时间戳转为Date对象
+            long createdTimestamp = container.getCreated();
+            Date createdDate = new Date(createdTimestamp * 1000);
+            // 设置创建时间
+            String created = createdDate.toString();
+            containerVo.setCreated(created);
             containerVoList.add(containerVo);
         }
         return containerVoList;

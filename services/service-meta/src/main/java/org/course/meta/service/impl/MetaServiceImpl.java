@@ -34,8 +34,13 @@ public class MetaServiceImpl implements MetaService {
     }
 
     @Override
-    public List<ServiceInstance> getServiceInstances() {
-        return discoveryClient.getInstances("service-docker");
+    public List<String> getServiceInstances() {
+        List<ServiceInstance> instances = discoveryClient.getInstances("service-docker");
+        List<String> hosts = new ArrayList<>();
+        for (ServiceInstance instance : instances) {
+            hosts.add(instance.getHost());
+        }
+        return hosts;
     }
 
     @Override
@@ -114,27 +119,27 @@ public class MetaServiceImpl implements MetaService {
     public List<ContainerStatVO> checkContainersStatus(double cpuThreshold, double memoryThreshold) {
         List<ContainerStatVO> result = new ArrayList<>();
         List<ServiceInstance> instances = discoveryClient.getInstances("service-docker");
-        
+
         for (ServiceInstance instance : instances) {
             try {
                 String url = instance.getUri().toString() + "/docker/status";
                 DockerStatus dockerStatus = restTemplate.getForObject(url, DockerStatus.class);
-                
+
                 if (dockerStatus != null && dockerStatus.getContainers() != null) {
-                    for (ContainerStatus container : dockerStatus.getContainers()) {
-                        if (isContainerAbnormal(container, cpuThreshold, memoryThreshold)) {
-                            ContainerStatVO statVO = convertToContainerStatVO(container, instance.getHost(), 
-                                    cpuThreshold, memoryThreshold);
-                            result.add(statVO);
-                        }
-                    }
+//                    for (ContainerStatus container : dockerStatus.getContainers()) {
+//                        if (isContainerAbnormal(container, cpuThreshold, memoryThreshold)) {
+//                            ContainerStatVO statVO = convertToContainerStatVO(container, instance.getHost(),
+//                                    cpuThreshold, memoryThreshold);
+//                            result.add(statVO);
+//                        }
+//                    }
                 }
             } catch (Exception e) {
-                log.error("Error checking containers for instance {}: {}", 
+                log.error("Error checking containers for instance {}: {}",
                         instance.getHost(), e.getMessage());
             }
         }
-        
+
         return result;
     }
 
@@ -153,28 +158,28 @@ public class MetaServiceImpl implements MetaService {
         return false;
     }
 
-    private ContainerStatVO convertToContainerStatVO(ContainerStatus container, String host, 
-            double cpuThreshold, double memoryThreshold) {
+    private ContainerStatVO convertToContainerStatVO(ContainerStatus container, String host,
+                                                     double cpuThreshold, double memoryThreshold) {
         ContainerStatVO statVO = new ContainerStatVO();
-        statVO.setContainerId(container.getContainerId());
+//        statVO.setContainerId(container.getContainerId());
         statVO.setHost(host);
         statVO.setCpuUsagePercentage(container.getCpuUsagePercent());
-        
+
         // 计算内存使用率
         if (container.getMemLimit() > 0) {
             double memoryUsagePercent = (double) container.getMemUsage() / container.getMemLimit() * 100;
             statVO.setMemoryUsagePercentage(Math.round(memoryUsagePercent * 100.0) / 100.0);
         }
-        
+
         // 设置状态
-        statVO.setStatus(determineStatus(container.getCpuUsagePercent(), 
+        statVO.setStatus(determineStatus(container.getCpuUsagePercent(),
                 statVO.getMemoryUsagePercentage(), cpuThreshold, memoryThreshold));
-        
+
         return statVO;
     }
 
-    private String determineStatus(double cpuUsage, Double memoryUsage, 
-            double cpuThreshold, double memoryThreshold) {
+    private String determineStatus(double cpuUsage, Double memoryUsage,
+                                   double cpuThreshold, double memoryThreshold) {
         if (cpuUsage >= 90 || (memoryUsage != null && memoryUsage >= 90)) {
             return "CRITICAL";
         } else if (cpuUsage >= cpuThreshold || (memoryUsage != null && memoryUsage >= memoryThreshold)) {

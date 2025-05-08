@@ -9,7 +9,6 @@ import lombok.Data;
  */
 @Data
 public class ContainerStatus {
-    private String containerId;
     private Long memUsage;
     private Long memLimit;
     private Double cpuUsagePercent;

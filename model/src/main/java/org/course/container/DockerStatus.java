@@ -3,6 +3,7 @@ package org.course.container;
 import lombok.Data;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Description:
@@ -14,5 +15,5 @@ public class DockerStatus {
     private Long memUsage;
     private Long memTotal;
     private Double cpuUsagePercent;
-    private List<ContainerStatus> containers;
+    private Map<String,ContainerStatus> containers;
 }

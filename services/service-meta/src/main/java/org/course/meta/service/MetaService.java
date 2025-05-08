@@ -14,7 +14,7 @@ import java.util.List;
  */
 public interface MetaService {
 
-    List<ServiceInstance> getServiceInstances();
+    List<String> getServiceInstances();
 
     DockerInfo getDockerInfo(String host);
 

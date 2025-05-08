@@ -2,6 +2,8 @@ package org.course.container;
 
 import lombok.Data;
 
+import java.util.Date;
+
 /**
  * Description:
  *
@@ -12,5 +14,5 @@ public class ContainerVo {
     private String containerId;
     private String name;
     private String state;
-    private Long created;
+    private String created;
 }

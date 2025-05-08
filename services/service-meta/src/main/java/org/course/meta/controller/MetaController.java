@@ -7,7 +7,6 @@ import org.course.container.DockerStatus;
 import org.course.meta.model.ContainerStatVO;
 import org.course.meta.service.MetaService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -18,6 +17,7 @@ import java.util.List;
  * @author zjy
  */
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/meta")
 @Tag(name = "Meta API")
 public class MetaController {
@@ -32,7 +32,7 @@ public class MetaController {
 
     @GetMapping("/services")
     @Operation(summary = "获取服务列表", description = "获取所有提供docker服务的机器")
-    public List<ServiceInstance> getServiceInstances() {
+    public List<String> getServiceInstances() {
         return metaService.getServiceInstances();
     }
 
