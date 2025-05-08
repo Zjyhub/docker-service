@@ -187,4 +187,33 @@ public class MetaServiceImpl implements MetaService {
         }
         return "OK";
     }
+
+    @Override
+    public String createContainer(String host, String containerName, Long memoryBytes, String image) {
+        List<ServiceInstance> instances = discoveryClient.getInstances("service-docker");
+        for (ServiceInstance instance : instances) {
+            if (host.equals(instance.getHost())) {
+                String url = instance.getUri().toString() + "/docker/create";
+                
+                // 构建请求参数
+                String requestUrl = String.format("%s?name=%s&memory=%d&image=%s",
+                    url,
+                    containerName,
+                    memoryBytes,
+                    image);
+                
+                try {
+                    String containerId = restTemplate.postForObject(requestUrl, null, String.class);
+                    if (containerId == null) {
+                        throw new RuntimeException("Failed to create container: No container ID returned");
+                    }
+                    return containerId;
+                } catch (Exception e) {
+                    log.error("Failed to create container on host {}: {}", host, e.getMessage());
+                    throw new RuntimeException("Failed to create container: " + e.getMessage());
+                }
+            }
+        }
+        throw new RuntimeException("No Docker service found for host: " + host);
+    }
 }

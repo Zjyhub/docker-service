@@ -18,8 +18,8 @@ public class DockerConfig {
     @Bean(name = "dockerClient")
     public DockerClient connectDocker() {
         DefaultDockerClientConfig config = DefaultDockerClientConfig.createDefaultConfigBuilder()
-                .withApiVersion("1.47")
-                .withDockerHost("tcp://localhost:2375")
+                .withApiVersion("1.41")
+                .withDockerHost("tcp://192.168.65.120:2375")
                 .build();
 
         DockerHttpClient httpClient = new ApacheDockerHttpClient.Builder()

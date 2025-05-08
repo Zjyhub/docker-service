@@ -4,10 +4,7 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.command.CreateContainerCmd;
 import com.github.dockerjava.api.command.CreateContainerResponse;
 import com.github.dockerjava.api.exception.NotFoundException;
-import com.github.dockerjava.api.model.Container;
-import com.github.dockerjava.api.model.HostConfig;
-import com.github.dockerjava.api.model.Info;
-import com.github.dockerjava.api.model.Statistics;
+import com.github.dockerjava.api.model.*;
 import com.github.dockerjava.core.InvocationBuilder;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -178,6 +175,7 @@ public class DockerServiceImpl implements DockerService {
                     .withName(containerName)
                     .withHostConfig(hostConfig)
                     .withCmd("tail", "-f", "/dev/null");  // 保持容器运行
+
 
             CreateContainerResponse response = createContainerCmd.exec();
             String containerId = response.getId();

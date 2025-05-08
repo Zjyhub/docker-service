@@ -37,4 +37,16 @@ public interface MetaService {
      * @return 超过阈值的容器列表
      */
     List<ContainerStatVO> checkContainersStatus(double cpuThreshold, double memoryThreshold);
+
+    /**
+     * 在指定主机上创建容器
+     *
+     * @param host 主机地址
+     * @param containerName 容器名称
+     * @param memoryBytes 内存限制（字节）
+     * @param image 镜像名称
+     * @return 创建的容器ID
+     * @throws RuntimeException 如果创建失败
+     */
+    String createContainer(String host, String containerName, Long memoryBytes, String image);
 }

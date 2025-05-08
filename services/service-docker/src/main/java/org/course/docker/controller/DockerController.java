@@ -78,7 +78,7 @@ public class DockerController {
     @Operation(summary = "创建容器", description = "创建新的容器，指定镜像、内存限制和容器名称")
     public ResponseEntity<?> createContainer(
             @RequestParam("name") String containerName,
-            @RequestParam("memory") Long memoryLimit,
+            @RequestParam(value = "memory", required = false) Long memoryLimit,
             @RequestParam("image") String image
     ) {
         try {
@@ -87,9 +87,9 @@ public class DockerController {
                 return ResponseEntity.badRequest().body("Invalid image name format");
             }
 
-            // 验证内存限制
-            if (memoryLimit <= 0) {
-                return ResponseEntity.badRequest().body("Memory limit must be greater than 0");
+            // 设置默认内存限制 (128MB)
+            if (memoryLimit == null || memoryLimit <= 0) {
+                memoryLimit = 128L * 1024 * 1024; // 128MB
             }
 
             // 验证容器名称
