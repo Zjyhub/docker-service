@@ -16,6 +16,7 @@ import org.course.docker.service.DockerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -199,9 +200,12 @@ public class DockerServiceImpl implements DockerService {
             containerVo.setState(container.getState());
             // 获取容器的创建时间,将时间戳转为Date对象
             long createdTimestamp = container.getCreated();
+            // 将时间戳转换为格式为"yyyy-MM-dd"的字符串
             Date createdDate = new Date(createdTimestamp * 1000);
-            // 设置创建时间
-            String created = createdDate.toString();
+            // 设置创建时间格式
+            // 这里可以使用SimpleDateFormat来格式化日期
+             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+             String created = sdf.format(createdDate);
             containerVo.setCreated(created);
             containerVoList.add(containerVo);
         }
